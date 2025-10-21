@@ -1,0 +1,29 @@
+DESCRIPTION >
+    Landing datasource for outreach campaign history events from Kafka
+
+SCHEMA >
+    `id` UUID `json:$.id`,
+    `timestamp_created` DateTime64(3) `json:$.timestamp_created`,
+    `organization` UUID `json:$.organization`,
+    `campaign_id` Nullable(UUID) `json:$.campaign_id`,
+    `subsequence_id` Nullable(UUID) `json:$.subsequence_id`,
+    `contact` String `json:$.contact`,
+    `event_type` Int16 `json:$.event_type`,
+    `step` Nullable(String) `json:$.step`,
+    `e_account` Nullable(String) `json:$.e_account`,
+    `is_first` Nullable(UInt8) `json:$.is_first`,
+    `ts_ext_mserver` Nullable(DateTime64(3)) `json:$.ts_ext_mserver`,
+    `link_lookup_id` Nullable(Int64) `json:$.link_lookup_id`,
+    `link_clicked` Nullable(String) `json:$.link_clicked`,
+    `timestamp_created_date` Nullable(Date) `json:$.timestamp_created_date`,
+    `assigned_to` Nullable(UUID) `json:$.assigned_to`,
+    `history_value` Nullable(Int16) `json:$.history_value`,
+    `list_id` Nullable(UUID) `json:$.list_id`,
+    `company_domain` Nullable(String) `json:$.company_domain`
+
+ENGINE "MergeTree"
+ENGINE_SORTING_KEY "timestamp_created, organization, event_type"
+
+KAFKA_CONNECTION_NAME kafka_connection
+KAFKA_TOPIC outreach_campaign_history
+KAFKA_GROUP_ID outreach_consumer_group
