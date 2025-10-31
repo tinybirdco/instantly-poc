@@ -1,0 +1,26 @@
+NODE copy
+SQL >
+
+    %
+    SELECT
+        toStartOfHour(timestamp_created) AS hour,
+        campaign_id,
+        organization,
+        countIf(event_type = 1) AS emails_sent_count,
+        uniqExactIf(contact, event_type = 1) AS contacted_count,
+        uniqExactIf(contact, event_type = 1 AND is_first) AS new_leads_contacted_count,
+        uniqExactIf(contact, event_type = 2) AS open_count,
+        uniqExactIf(contact, event_type = 3) AS reply_count,
+        uniqExactIf(contact, event_type = 4) AS link_click_count,
+        uniqExactIf(contact, event_type = -1) AS bounced_count,
+        uniqExactIf(contact, event_type = -2) AS unsubscribed_count,
+        uniqExactIf(contact, event_type = 10 AND history_value > 0 AND is_first) AS total_opportunities
+    FROM outreach_campaign_history
+    where toStartOfMonth(timestamp_created) = '2025-10-01'
+    GROUP BY 1, 2, 3
+
+TYPE copy
+TARGET_DATASOURCE agg_campaigns_hourly_consolidated
+COPY_MODE append
+COPY_SCHEDULE @on-demand
+

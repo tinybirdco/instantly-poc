@@ -1,0 +1,83 @@
+TOKEN "raw_endnpoint_endpoint_read_7057" READ
+
+NODE daily_agg
+SQL >
+
+    %
+    SELECT
+        Date(toStartOfDay(timestamp_created, {{ String(timezone, 'UTC') }})) AS day,
+        countIf(event_type = 1) AS emails_sent_count,
+        uniqExactIf(contact, event_type = 1) AS contacted_count,
+        uniqExactIf(contact, event_type = 1 AND is_first) AS new_leads_contacted_count,
+        uniqExactIf(contact, event_type = 2) AS open_count,
+        uniqExactIf(contact, event_type = 3) AS reply_count,
+        uniqExactIf(contact, event_type = 4) AS link_click_count,
+        uniqExactIf(contact, event_type = -1) AS bounced_count,
+        uniqExactIf(contact, event_type = -2) AS unsubscribed_count,
+        uniqExactIf(contact, event_type = 10 AND history_value > 0 AND is_first) AS total_opportunities
+    FROM outreach_campaign_history
+    WHERE 1
+        {% if defined(date_from) and defined(date_to)%}
+         and toStartOfDay(timestamp_created,{{ String(timezone, 'UTC') }}) >= {{Date(date_from)}} 
+         and toStartOfDay(timestamp_created,{{ String(timezone, 'UTC') }}) <= {{Date(date_to)}}
+         {% else %}
+         and toStartOfDay(timestamp_created,{{ String(timezone, 'UTC') }}) >= toDate('2025-09-30',{{ String(timezone, 'UTC') }}) - interval 1 week
+        {% end %}
+        AND organization = {{ String(organization, 'e63fed4f-fed3-46eb-ac28-c9ec5131d018') }}
+        {% if defined(campaign) %}
+        and campaign_id = {{ String(campaign, '1d3da756-187b-42b9-ba59-8add08dc816b') }}
+        {% end %}
+    GROUP BY 1
+    ORDER BY day asc
+
+
+
+NODE hourly_agg
+SQL >
+
+    %
+    SELECT
+        toStartOfHour(timestamp_created, {{ String(timezone, 'UTC') }}) AS day,
+        --campaign_id,
+        --organization,
+        countIf(event_type = 1) AS emails_sent_count,
+        uniqExactIf(contact, event_type = 1) AS contacted_count,
+        uniqExactIf(contact, event_type = 1 AND is_first) AS new_leads_contacted_count,
+        uniqExactIf(contact, event_type = 2) AS open_count,
+        uniqExactIf(contact, event_type = 3) AS reply_count,
+        uniqExactIf(contact, event_type = 4) AS link_click_count,
+        uniqExactIf(contact, event_type = -1) AS bounced_count,
+        uniqExactIf(contact, event_type = -2) AS unsubscribed_count,
+        uniqExactIf(contact, event_type = 10 AND history_value > 0 AND is_first) AS total_opportunities
+    FROM outreach_campaign_history
+        WHERE 1
+        {% if defined(date_from) and defined(date_to)%}
+         and toStartOfHour(timestamp_created,{{ String(timezone, 'UTC') }}) >= {{Date(date_from, '2025-09-30')}} 
+         and toStartOfHour(timestamp_created,{{ String(timezone, 'UTC') }}) <= {{Date(date_to, '2025-09-30')}}
+         {% else %}
+         and toStartOfHour(timestamp_created,{{ String(timezone, 'UTC') }}) >= toDate('2025-09-30',{{ String(timezone, 'UTC') }}) - interval 1 week
+        {% end %}
+        AND organization = {{ String(organization, 'e63fed4f-fed3-46eb-ac28-c9ec5131d018') }}
+        {% if defined(campaign) %}
+        and campaign_id = {{ String(campaign, '1d3da756-187b-42b9-ba59-8add08dc816b') }}
+        {% end %}
+    GROUP BY 1
+    ORDER BY day asc
+
+
+
+NODE endpoint
+SQL >
+
+    %
+    {% if defined(aggregation) and aggregation == 'daily'%}
+    select * from daily_agg
+    {% elif defined(aggregation) and aggregation == 'hourly'%}
+    select * from hourly_agg
+    {% else %}
+    select 1
+    {% end %}
+
+TYPE endpoint
+
+

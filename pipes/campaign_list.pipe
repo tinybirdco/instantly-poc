@@ -1,0 +1,11 @@
+TOKEN "campaign_list_endpoint_read_9653" READ
+
+NODE endpoint
+SQL >
+
+    %
+    select distinct campaign_id from outreach_campaign_history
+    where organization = {{String(organization, 'f569dc5b-5b01-4de3-8001-3081a0c7abc3')}}
+
+TYPE endpoint
+

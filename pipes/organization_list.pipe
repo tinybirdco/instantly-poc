@@ -1,0 +1,14 @@
+TOKEN "organization_list_endpoint_read_6866" READ
+
+NODE endpoint
+SQL >
+
+    select toUUID('e63fed4f-fed3-46eb-ac28-c9ec5131d018') as organization
+    union all
+    select distinct organization from outreach_campaign_history
+    where timestamp_created < now() - interval 3 month and timestamp_created > now() - interval 1 year
+    limit 20
+
+TYPE endpoint
+
+

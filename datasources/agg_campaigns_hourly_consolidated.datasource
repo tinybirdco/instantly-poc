@@ -1,0 +1,19 @@
+# Data Source created from Pipe 't_31c506018a7d419d88cf8733ca1dc21d'
+
+SCHEMA >
+    `hour` DateTime,
+    `campaign_id` UUID,
+    `organization` UUID,
+    `emails_sent_count` UInt64,
+    `contacted_count` UInt64,
+    `new_leads_contacted_count` UInt64,
+    `open_count` UInt64,
+    `reply_count` UInt64,
+    `link_click_count` UInt64,
+    `bounced_count` UInt64,
+    `unsubscribed_count` UInt64,
+    `total_opportunities` UInt64
+
+ENGINE "MergeTree"
+ENGINE_PARTITION_KEY "toYYYYMM(hour)"
+ENGINE_SORTING_KEY "organization, campaign_id, hour"

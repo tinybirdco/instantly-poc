@@ -1,0 +1,54 @@
+TOKEN "query_pattern_3_endpoint_read_9753" READ
+
+NODE endpoint
+SQL >
+
+    WITH filtered AS (
+      SELECT campaign_id, contact, event_type, is_first, history_value
+      FROM outreach_campaign_history
+      WHERE organization = '04c7b758-97f3-4821-abd0-82f2785c155e'
+        AND campaign_id IS NOT NULL
+        AND event_type IN (1,2,3,4,-1,-2,10)
+    ),
+    per_contact AS (
+      SELECT contact,
+        MAX(event_type = 1) AS sent_contact,
+        MAX(event_type = 1 AND is_first) AS sent_first_contact,
+        MAX(event_type = 3) AS replied_contact,
+        MAX(event_type = 3 AND is_first) AS replied_first_contact,
+        MAX(event_type = -1) AS bounced_contact,
+        MAX(event_type = -2) AS unsub_contact,
+        MAX(event_type = 10 AND is_first AND history_value > 0) AS opp_contact
+      FROM filtered
+      GROUP BY contact
+    ),
+    per_contact_agg AS (
+      SELECT
+        SUM(sent_contact) AS contacted_count,
+        SUM(sent_first_contact) AS new_leads_contacted_count,
+        SUM(replied_contact) AS reply_count,
+        SUM(replied_first_contact) AS reply_count_unique,
+        SUM(bounced_contact) AS bounced_count,
+        SUM(unsub_contact) AS unsubscribed_count,
+        SUM(opp_contact) AS total_opportunities
+      FROM per_contact
+    ),
+    row_counts AS (
+      SELECT
+        COUNT(CASE WHEN event_type = 1 THEN 1 END) AS emails_sent_count,
+        COUNT(CASE WHEN event_type = 2 THEN 1 END) AS open_count,
+        COUNT(CASE WHEN event_type = 2 AND is_first THEN 1 END) AS open_count_unique,
+        COUNT(CASE WHEN event_type = 4 THEN 1 END) AS link_click_count,
+        COUNT(CASE WHEN event_type = 4 AND is_first THEN 1 END) AS link_click_count_unique,
+        SUM(CASE WHEN event_type = 10 AND history_value = 1 AND is_first THEN 1 ELSE 0 END) AS total_interested,
+        SUM(CASE WHEN event_type = 10 AND history_value = 2 AND is_first THEN 1 ELSE 0 END) AS total_meeting_booked,
+        SUM(CASE WHEN event_type = 10 AND history_value = 3 AND is_first THEN 1 ELSE 0 END) AS total_meeting_completed,
+        SUM(CASE WHEN event_type = 10 AND history_value = 4 AND is_first THEN 1 ELSE 0 END) AS total_closed
+      FROM filtered
+    )
+    SELECT * FROM row_counts CROSS JOIN per_contact_agg
+
+
+TYPE endpoint
+
+
